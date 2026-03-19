@@ -2,7 +2,7 @@
 ![Requests](https://img.shields.io/badge/requests-enabled-2ea44f)
 ![dotenv](https://img.shields.io/badge/config-.env-orange)
 
-# Extract LinkedIn profiles from Google SERP API
+# Draft 2
 [![HasData_bannner](assets/banner.png)](https://hasdata.com/?utm_source=github&utm_medium=repo&utm_campaign=extract-emails-from-google-search)
 
 Companion code for a YouTube video showing how to find publicly visible LinkedIn profiles from Google search with the [HasData Google SERP API](https://hasdata.com/apis/google-serp-api?utm_source=github&utm_medium=repo&utm_campaign=extract-emails-from-google-search).

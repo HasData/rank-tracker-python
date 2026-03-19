@@ -1,5 +1,7 @@
 import os
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import datetime
 import xlsxwriter
 
 
@@ -8,26 +10,30 @@ def make_graph(target_domain: str, domain_data: dict):
     image_height = 1080
     dpi = 100
 
-    plt.figure(figsize=(image_width/dpi, image_height/dpi), dpi=dpi)
+    plt.figure(figsize=(image_width / dpi, image_height / dpi), dpi=dpi)
 
     for query, rank_data in domain_data[target_domain].items():
-        x_axis = [x[0] for x in rank_data]
+        x_axis = [datetime.strptime(x[0], "%Y-%m-%d %H:%M:%S") for x in rank_data]
         y_axis = [x[1] for x in rank_data]
 
         plt.plot(x_axis, y_axis, label=f"Query: {query}")
 
-    plt.axhline(y=1, color="red", linestyle="--", label="Rank 1")
+    plt.axhline(y=1, linestyle="--", label="Rank 1")
     plt.xlabel("Timeline")
     plt.ylabel("SEO Rank")
     plt.title(f"SEO Rank Changes for {target_domain}")
     plt.legend()
-    plt.xticks(rotation=45)
-    plt.gca().invert_yaxis()  # rank 1 at top
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d %H:%M"))
+    plt.gcf().autofmt_xdate()
+    ax.invert_yaxis()
     plt.tight_layout()
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, '..', 'output', f'{target_domain}.png')
-    plt.savefig(file_path, dpi=100, bbox_inches="tight")
+    plt.savefig(file_path, dpi=dpi, bbox_inches="tight")
+    plt.close()
 
 
 def make_excel_report(target_domain, domain_data):
