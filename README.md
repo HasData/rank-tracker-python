@@ -62,7 +62,7 @@ extract-emails-from-google-search/
     |-- example.com.json
     |-- example.com.png
     |-- example.com.xlsx
-|-- output/
+|-- settings/
     |-- search_queries.txt
     |-- target_domain.txt
 |-- src/
