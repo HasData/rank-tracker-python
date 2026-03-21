@@ -53,6 +53,13 @@ def main():
 
 
 if __name__ == '__main__':
+
+    days_to_wait = 0
+    hours_to_wait = 4
+    minutes_to_wait = 0
+    seconds_to_wait = 0
+
     while True:
-        time.sleep(60)
+        total_time_to_wait = (days_to_wait*86400) + (hours_to_wait*3600) + (minutes_to_wait*60) + seconds_to_wait
         main()
+        time.sleep(total_time_to_wait)

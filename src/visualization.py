@@ -6,27 +6,32 @@ import xlsxwriter
 
 
 def make_graph(target_domain: str, domain_data: dict):
-    image_width = 1920
-    image_height = 1080
+    image_width = 192*5
+    image_height = 108*5
     dpi = 100
 
     plt.figure(figsize=(image_width / dpi, image_height / dpi), dpi=dpi)
 
     for query, rank_data in domain_data[target_domain].items():
-        x_axis = [datetime.strptime(x[0], "%Y-%m-%d %H:%M:%S") for x in rank_data]
+        x_axis = list(range(len(rank_data)))
         y_axis = [x[1] for x in rank_data]
 
         plt.plot(x_axis, y_axis, label=f"Query: {query}")
 
-    plt.axhline(y=1, linestyle="--", label="Rank 1")
+    plt.axhline(y=1, linestyle="--", label="Rank 1", color="red")
     plt.xlabel("Timeline")
     plt.ylabel("SEO Rank")
     plt.title(f"SEO Rank Changes for {target_domain}")
+
     plt.legend()
+    first_query = next(iter(domain_data[target_domain]))
+    num_points = len(domain_data[target_domain][first_query])
+
+    # Set custom labels
     ax = plt.gca()
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d %H:%M"))
-    plt.gcf().autofmt_xdate()
+    ax.set_xticks(range(num_points))
+    ax.set_xticklabels([f"Day {i + 1}" for i in range(num_points)])
+
     ax.invert_yaxis()
     plt.tight_layout()
 
@@ -164,3 +169,56 @@ def make_excel_report(target_domain, domain_data):
         row_idx += 1
 
     workbook.close()
+
+
+if __name__ == '__main__':
+    json_data = {
+        "hasdata.com": {
+            "google serp api": [
+                ["2026-03-01 02:00:00", 15],
+                ["2026-03-02 02:00:00", 16],
+                ["2026-03-03 02:00:00", 14],
+                ["2026-03-04 02:00:00", 13],
+                ["2026-03-05 02:00:00", 14],
+                ["2026-03-06 02:00:00", 14],
+                ["2026-03-07 02:00:00", 12],
+                ["2026-03-08 02:00:00", 13],
+                ["2026-03-09 02:00:00", 10],
+                ["2026-03-10 02:00:00", 9],
+                ["2026-03-11 02:00:00", 8],
+                ["2026-03-12 02:00:00", 7],
+            ],
+            "google maps api": [
+                ["2026-03-01 02:00:00", 33],
+                ["2026-03-02 02:00:00", 36],
+                ["2026-03-03 02:00:00", 38],
+                ["2026-03-04 02:00:00", 35],
+                ["2026-03-05 02:00:00", 31],
+                ["2026-03-06 02:00:00", 31],
+                ["2026-03-07 02:00:00", 36],
+                ["2026-03-08 02:00:00", 29],
+                ["2026-03-09 02:00:00", 28],
+                ["2026-03-10 02:00:00", 29],
+                ["2026-03-11 02:00:00", 27],
+                ["2026-03-12 02:00:00", 25],
+            ],
+            "zillow api": [
+                ["2026-03-01 02:00:00", 28],
+                ["2026-03-02 02:00:00", 29],
+                ["2026-03-03 02:00:00", 30],
+                ["2026-03-04 02:00:00", 32],
+                ["2026-03-05 02:00:00", 25],
+                ["2026-03-06 02:00:00", 24],
+                ["2026-03-07 02:00:00", 27],
+                ["2026-03-08 02:00:00", 22],
+                ["2026-03-09 02:00:00", 20],
+                ["2026-03-10 02:00:00", 21],
+                ["2026-03-11 02:00:00", 17],
+                ["2026-03-12 02:00:00", 15],
+            ],
+        }
+    }
+
+    target_domain = 'hasdata.com'
+    make_graph(target_domain, json_data)
+    make_excel_report(target_domain, json_data)
