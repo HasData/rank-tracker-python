@@ -1,6 +1,4 @@
 requests
 python-dotenv
-pydantic
-numpy
 matplotlib
 xlsxwriter

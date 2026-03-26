@@ -10,35 +10,34 @@ def make_graph(target_domain: str, domain_data: dict):
     image_height = 108*5
     dpi = 100
 
-    plt.figure(figsize=(image_width / dpi, image_height / dpi), dpi=dpi)
+    fig, ax = plt.subplots(figsize=(image_width / dpi, image_height / dpi), dpi=dpi)
 
-    for query, rank_data in domain_data[target_domain].items():
-        x_axis = list(range(len(rank_data)))
-        y_axis = [x[1] for x in rank_data]
+    try:
+        for query, rank_data in domain_data[target_domain].items():
+            valid_data = [(datetime.strptime(x[0], "%Y-%m-%d %H:%M:%S"), x[1])
+                          for x in rank_data if x[1] is not None]
+            if not valid_data:
+                continue
+            x_axis = [d[0] for d in valid_data]
+            y_axis = [d[1] for d in valid_data]
+            ax.plot(x_axis, y_axis, label=f"Query: {query}", marker='o')
 
-        plt.plot(x_axis, y_axis, label=f"Query: {query}")
+        ax.axhline(y=1, linestyle="--", label="Rank 1", color="red")
+        ax.set_xlabel("Timeline")
+        ax.set_ylabel("SEO Rank")
+        ax.set_title(f"SEO Rank Changes for {target_domain}")
+        ax.legend()
 
-    plt.axhline(y=1, linestyle="--", label="Rank 1", color="red")
-    plt.xlabel("Timeline")
-    plt.ylabel("SEO Rank")
-    plt.title(f"SEO Rank Changes for {target_domain}")
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
+        fig.autofmt_xdate()
+        ax.invert_yaxis()
+        plt.tight_layout()
 
-    plt.legend()
-    first_query = next(iter(domain_data[target_domain]))
-    num_points = len(domain_data[target_domain][first_query])
-
-    # Set custom labels
-    ax = plt.gca()
-    ax.set_xticks(range(num_points))
-    ax.set_xticklabels([f"Day {i + 1}" for i in range(num_points)])
-
-    ax.invert_yaxis()
-    plt.tight_layout()
-
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(script_dir, '..', 'output', f'{target_domain}.png')
-    plt.savefig(file_path, dpi=dpi, bbox_inches="tight")
-    plt.close()
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(script_dir, '..', 'output', f'{target_domain}.png')
+        plt.savefig(file_path, dpi=dpi, bbox_inches="tight")
+    finally:
+        plt.close(fig)
 
 
 def make_excel_report(target_domain, domain_data):
@@ -77,11 +76,9 @@ def make_excel_report(target_domain, domain_data):
     border_only = workbook.add_format({'border': 1})
     datetime_format = get_data_format(COLOR_DARK)
     queries = domain_data[target_domain]
-    datetimes = []
-    for q_data in queries.values():
-        for item in q_data:
-            if item[0] not in datetimes:
-                datetimes.append(item[0])
+    datetimes = sorted(set(
+        item[0] for q_data in queries.values() for item in q_data
+    ))
 
     query_names = list(queries.keys())
     total_cols = 1 + (len(query_names) * 2)  # 1 Datetime col + (Rank & Delta) per query
@@ -135,16 +132,19 @@ def make_excel_report(target_domain, domain_data):
             curr_rank = None
             prev_rank = None
 
-            # Find the rank at this datetime and the previous one for Delta calculation
+            # Find the rank at this datetime and the last known rank for Delta
             for idx, item in enumerate(data_points):
                 if item[0] == dt:
                     curr_rank = item[1]
-                    if idx > 0:
-                        prev_rank = data_points[idx - 1][1]
+                    # Walk backwards to find last non-None rank
+                    for prev_idx in range(idx - 1, -1, -1):
+                        if data_points[prev_idx][1] is not None:
+                            prev_rank = data_points[prev_idx][1]
+                            break
                     break
 
-            # Formate and Calculate Rank Delta
-            delta = 0
+            # Calculate Rank Delta
+            delta = ""
             if curr_rank is not None and prev_rank is not None:
                 try:
                     delta = float(curr_rank) - float(prev_rank)
@@ -154,7 +154,7 @@ def make_excel_report(target_domain, domain_data):
                         delta = int(delta)
 
                 except (ValueError, TypeError):
-                    delta = 0  # Failsafe if the dictionary passes string literals ('rank1')
+                    delta = ""  # Failsafe if the dictionary passes string literals ('rank1')
 
             # Write mapped cells
             if curr_rank is not None:

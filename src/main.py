@@ -6,25 +6,28 @@ from utils import read_domain_data, read_lines_from_settings_txt, write_domain_d
 
 
 def get_rank(query: str, target_domain: str):
-    max_pages_search = 200
+    max_pages_search = 10
 
     for page_idx in range(max_pages_search):
         data = api.get_data(query, at_page=page_idx * 10)
 
-        if not 'organicResults' in data:
+        if 'organicResults' not in data:
             return None
 
         for result_idx, result in enumerate(data['organicResults']):
             domain_normalized = clean_domain(result.get('link', ''))
             if domain_normalized == target_domain:
-                search_rank = int(page_idx * 10 + result_idx + 1)
+                search_rank = page_idx * 10 + result.get('position', result_idx + 1)
                 return search_rank
 
     return None
 
 
 def main():
-    target_domain = read_lines_from_settings_txt('target_domain.txt')[0]
+    lines = read_lines_from_settings_txt('target_domain.txt')
+    if not lines:
+        raise RuntimeError("Missing target domain in --- settings/target_domain.txt")
+    target_domain = clean_domain(lines[0])
     if not target_domain:
         raise RuntimeError("Missing target domain in --- settings/target_domain.txt")
 
@@ -42,9 +45,12 @@ def main():
         if query not in domain_data[target_domain]:
             domain_data[target_domain][query] = []
 
-        rank = get_rank(query, target_domain)
-        if rank is not None:
-            domain_data[target_domain][query].append([datetime_now, rank])
+        try:
+            rank = get_rank(query, target_domain)
+        except Exception as e:
+            print(f'Error fetching rank for "{query}": {e}')
+            rank = None
+        domain_data[target_domain][query].append([datetime_now, rank])
 
     write_domain_data(target_domain, domain_data)
     make_graph(target_domain, domain_data)
@@ -59,7 +65,11 @@ if __name__ == '__main__':
     minutes_to_wait = 0
     seconds_to_wait = 0
 
+    total_time_to_wait = (days_to_wait*86400) + (hours_to_wait*3600) + (minutes_to_wait*60) + seconds_to_wait
+
     while True:
-        total_time_to_wait = (days_to_wait*86400) + (hours_to_wait*3600) + (minutes_to_wait*60) + seconds_to_wait
-        main()
+        try:
+            main()
+        except Exception as e:
+            print(f'Error during execution: {e}')
         time.sleep(total_time_to_wait)
