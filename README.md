@@ -9,7 +9,7 @@ Companion code for a YouTube video showing how to track your website SEO rank wi
 
 > Lightweight tutorial project: query Google SERP data, extract LinkedIn profiles, emails, location etc. From search results, and rank the best match for a person.
 
-[![Watch the video](assets/youtube-preview.png)](https://youtu.be/s0yGUf02IrQ)
+[![Watch the video](assets/youtube-preview.png)](https://youtu.be/Xmqn4nIPk14)
 
 This repository runs main.py to do the following:
 
